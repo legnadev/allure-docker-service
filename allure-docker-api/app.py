@@ -946,6 +946,43 @@ def send_results_endpoint(): #pylint: disable=too-many-branches
 
     return resp
 
+def modify_app_js_for_skipped_tests(project_path, build_order):
+    """
+    Modifies app.js file to include skipped tests in percentage calculation.
+    Replaces 'n+o+a' with 'n+o+a+t.skipped||0' in the minimized JavaScript.
+    """
+    try:
+        app_js_path = '{}/reports/{}/app.js'.format(project_path, build_order)
+        
+        if not os.path.exists(app_js_path):
+            LOGGER.warning("app.js file not found at: %s", app_js_path)
+            return False
+        
+        # Read the current content
+        with open(app_js_path, 'r', encoding='utf-8') as file:
+            content = file.read()
+        
+        # Perform the replacement
+        original_pattern = 'n+o+a'
+        replacement_pattern = 'n+o+a+t.skipped||0'
+        
+        if original_pattern in content:
+            modified_content = content.replace(original_pattern, replacement_pattern)
+            
+            # Write back the modified content
+            with open(app_js_path, 'w', encoding='utf-8') as file:
+                file.write(modified_content)
+            
+            LOGGER.info("Successfully modified app.js to include skipped tests in percentage calculation for project_path: %s, build_order: %s", project_path, build_order)
+            return True
+        else:
+            LOGGER.warning("Pattern '%s' not found in app.js file at: %s", original_pattern, app_js_path)
+            return False
+            
+    except Exception as ex:
+        LOGGER.error("Error modifying app.js file: %s", str(ex))
+        return False
+
 @app.route("/generate-report", strict_slashes=False)
 @app.route("/allure-docker-service/generate-report", strict_slashes=False)
 @jwt_required
@@ -1001,8 +1038,12 @@ def generate_report_endpoint():
             if line.startswith("BUILD_ORDER"):
                 build_order = line[line.index(':') + 1: len(line)]
 
+        # Modify app.js to include skipped tests in percentage calculation
+        modify_app_js_for_skipped_tests(project_path, build_order)
+
         report_url = url_for('get_reports_endpoint', project_id=project_id,
                              path='{}/index.html'.format(build_order), _external=True)
+        
     except Exception as ex:
         body = {
             'meta_data': {
