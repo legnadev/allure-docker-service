@@ -88,7 +88,7 @@ RUN groupadd --gid ${GID} allure \
   && useradd --uid ${UID} --gid allure --shell /bin/bash --create-home allure
 
 # Copy the app
-COPY --from=dev_stage $ROOT_DIR/allure-docker-api $ROOT/allure-docker-api
+COPY --from=dev_stage /code/allure-docker-api $ROOT/allure-docker-api
 COPY allure-docker-scripts $ROOT
 COPY --chown=allure:allure allure-docker-scripts/runAllureApp.sh $ROOT
 RUN chmod +x $ROOT/runAllureApp.sh
