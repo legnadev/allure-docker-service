@@ -51,28 +51,42 @@ LABEL org.label-schema.build-date=${BUILD_DATE} \
 
 # Skip QEMU for single architecture build
 
+# Install system dependencies
 RUN apt-get update && \
-    apt-get install -y software-properties-common && \
-    add-apt-repository ppa:deadsnakes/ppa && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends \
+    apt-get install -y software-properties-common
+
+# Add Python repository
+RUN add-apt-repository ppa:deadsnakes/ppa && \
+    apt-get update
+
+# Install Python and system packages
+RUN apt-get install -y --no-install-recommends \
       tzdata \
       nano \
       python${PYTHON_VERSION} \
       python3-pip \
       python3-dev \
-      unzip && \
-    ln -s `which python3` /usr/bin/python && \
-    pip3 install --upgrade pip && \
-    python${PYTHON_VERSION} -m pip install --upgrade pip setuptools wheel waitress && \
-    python${PYTHON_VERSION} -m pip install -v Flask==3.0.2 Flask-JWT-Extended==4.6.0 flask-swagger-ui==4.11.1 requests==2.31.0 && \
-    curl ${ALLURE_REPO}/${ALLURE_RELEASE}/allure-commandline-${ALLURE_RELEASE}.zip -L -o /tmp/allure-commandline.zip && \
-        unzip -q /tmp/allure-commandline.zip -d / && \
-        apt-get remove -y unzip && \
-        rm -rf /tmp/* && \
-        rm -rf /var/lib/apt/lists/* && \
-        chmod -R +x /allure-$ALLURE_RELEASE/bin && \
-        mkdir -p /app
+      unzip \
+      curl
+
+# Setup Python
+RUN ln -s `which python3` /usr/bin/python
+
+# Install Python packages
+RUN pip3 install --upgrade pip
+RUN python${PYTHON_VERSION} -m pip install --upgrade pip setuptools wheel waitress
+RUN python${PYTHON_VERSION} -m pip install Flask==3.0.2 Flask-JWT-Extended==4.6.0 flask-swagger-ui==4.11.1 requests==2.31.0
+
+# Download and install Allure
+RUN curl ${ALLURE_REPO}/${ALLURE_RELEASE}/allure-commandline-${ALLURE_RELEASE}.zip -L -o /tmp/allure-commandline.zip
+RUN unzip -q /tmp/allure-commandline.zip -d /
+
+# Cleanup
+RUN apt-get remove -y unzip && \
+    rm -rf /tmp/* && \
+    rm -rf /var/lib/apt/lists/* && \
+    chmod -R +x /allure-$ALLURE_RELEASE/bin && \
+    mkdir -p /app
 
 ENV ROOT=/app
 ENV ALLURE_HOME="/allure-$ALLURE_RELEASE"
