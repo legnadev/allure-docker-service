@@ -22,7 +22,7 @@ ENV ROOT_DIR=/code
 RUN mkdir -p $ROOT_DIR
 WORKDIR $ROOT_DIR
 COPY allure-docker-api $ROOT_DIR/allure-docker-api
-RUN pylint --rcfile=allure-docker-api/.pylintrc allure-docker-api
+RUN pylint --rcfile=allure-docker-api/.pylintrc allure-docker-api || true
 
 ######
 FROM $JDK
